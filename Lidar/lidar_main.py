@@ -66,7 +66,7 @@ class LidarDataConverter():
 def main():
     rclpy.init()
 
-    node = LidarReader()
+    node = LidarNode()
     rclpy.spin(node)
 
     node.destroy_node()
