@@ -109,4 +109,19 @@ Die Verbindung zum Raspberry läuft über SSH und WLAN / Ethernet
 ssh user@hostname.local
 # oder
 ssh user@ipaddress
-``
+```
+
+Nach der erfolgreichen Verbindung muss nur noch der verbundene Lidar gestartet werden: 
+```
+ros2 launch sllidar_ros2 sllidar_a1_launch.py serial_port:=/dev/ttyUSB0
+```
+
+Potenziell muss man den USB eingang oder das Lidar Model ändern 
+
+Falls alles ohne fehler abgeschlossen hat sollte man zum testen ein zweites terminal mit ssh verbindung öffnen und in diesem: 
+```
+ros2 topic list
+```
+ausführen
+
+Wenn alles richtig läuft sollte man dort auch ein /scan topic sehen.
