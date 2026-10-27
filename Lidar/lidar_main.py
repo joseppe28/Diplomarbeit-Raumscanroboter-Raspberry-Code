@@ -2,6 +2,8 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 import math
+import serial
+import time
 
 class LidarNode(Node):
 
@@ -10,12 +12,16 @@ class LidarNode(Node):
 
         self.cloud = {}
 
+        self.ser = serial.Serial("/dev/ttyACM0", 115200, timeout=1)
+
         self.subscription = self.create_subscription(
             LaserScan,
             "/scan",
             self.receive_data,
             10
         )
+
+        self.scan_count = 0
     
     # is called when data is received and calls the converter 
     # Parameter: self, the message received from the LIDAR
@@ -34,10 +40,19 @@ class LidarNode(Node):
             msg.range_max,
             0  # Replace with actual motor angle if available
         )
+        
+        
 
         self.get_logger().info(f"Converted to Cartesian: {self.cloud}")
 
+        self.scan_count += 1
+        if self.scan_count >= 10:
+            self.ser.write(b"L;1000\n")  
+            self.scan_count = 0
 
+                    
+
+              
 class LidarDataConverter():
     
     def __init__(self):
