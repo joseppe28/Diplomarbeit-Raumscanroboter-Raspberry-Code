@@ -4,6 +4,10 @@ from sensor_msgs.msg import LaserScan
 import math
 import serial
 import time
+import asyncio
+import json
+from websockets.asyncio.server import serve
+import websocket.py as ws
 
 class LidarNode(Node):
 
@@ -11,6 +15,11 @@ class LidarNode(Node):
         super().__init__('lidar_node')
 
         self.cloud = {}
+        self.websocket_server = ws.WebSocketServer()
+
+        self.current_motor_angle = 0.0 
+        self.ANGLE_PER_STEP = 1.8
+        self.STEPS_PER_SCAN = 100
 
         self.ser = serial.Serial("/dev/ttyACM0", 115200, timeout=1)
 
@@ -26,7 +35,7 @@ class LidarNode(Node):
     # is called when data is received and calls the converter 
     # Parameter: self, the message received from the LIDAR
     # Return: None
-    def receive_data(self, msg):
+    async def receive_data(self, msg):
         self.get_logger().info(f"Received LIDAR data: {msg.ranges}")
 
         # Convert LIDAR data to Cartesian coordinates
@@ -38,7 +47,7 @@ class LidarNode(Node):
             msg.angle_increment,
             msg.range_min,
             msg.range_max,
-            0  # Replace with actual motor angle if available
+            self.current_motor_angle
         )
         
         
@@ -47,8 +56,11 @@ class LidarNode(Node):
 
         self.scan_count += 1
         if self.scan_count >= 10:
-            self.ser.write(b"L;1000\n")  
+            self.current_motor_angle += (self.ANGLE_PER_STEP * self.STEPS_PER_SCAN) % 360
+            self.ser.write(b"L;" + str(self.current_motor_angle).encode() + b"\n")  
             self.scan_count = 0
+
+            await self.websocket_server.send_data(self.websocket_server, self.cloud)
 
                     
 
